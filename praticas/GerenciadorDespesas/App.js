@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useColorScheme, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
-import { theme } from './src/constants/theme';
+import { ThemeModeProvider, theme, useThemeMode } from './src/constants/theme';
 import DespesasRecentes from './src/screens/DespesasRecentes';
 import GerenciarDespesa from './src/screens/GerenciarDespesa';
 import TodasDespesas from './src/screens/TodasDespesas';
@@ -14,8 +14,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function HomeTabs() {
-  const colorScheme = useColorScheme();
-  const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
+  const { currentTheme } = useThemeMode();
 
   return (
     <Tab.Navigator
@@ -43,98 +42,80 @@ function HomeTabs() {
   );
 }
 
+function ThemeToggleButton() {
+  const { themeMode, setThemeMode, currentTheme } = useThemeMode();
+
+  return (
+    <View style={styles.themeToggleWrapper}>
+      <Pressable
+        onPress={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+        style={[
+          styles.themeToggle,
+          {
+            backgroundColor: currentTheme.surface,
+            borderColor: currentTheme.border,
+          },
+        ]}
+      >
+        <Text style={[styles.themeToggleText, { color: currentTheme.text }]}>
+          {themeMode === 'light' ? 'Modo claro' : 'Modo escuro'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function App() {
-  const colorScheme = useColorScheme();
+  const systemColorScheme = useColorScheme();
+  const [themeMode, setThemeMode] = useState('system');
+
+  const navigationTheme = useMemo(() => {
+    const isDark = themeMode === 'dark' || (themeMode === 'system' && systemColorScheme === 'dark');
+    return isDark ? DarkTheme : DefaultTheme;
+  }, [systemColorScheme, themeMode]);
 
   return (
     <ExpensesContextProvider>
-      <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="HomeTabs"
-            component={HomeTabs}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="GerenciarDespesa"
-            component={GerenciarDespesa}
-            options={{ title: 'Nova despesa' }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <ThemeModeProvider themeMode={themeMode} setThemeMode={setThemeMode} systemColorScheme={systemColorScheme}>
+        <NavigationContainer theme={navigationTheme}>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="HomeTabs"
+              component={HomeTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="GerenciarDespesa"
+              component={GerenciarDespesa}
+              options={{ title: 'Nova despesa' }}
+            />
+          </Stack.Navigator>
+          <ThemeToggleButton />
+        </NavigationContainer>
+      </ThemeModeProvider>
     </ExpensesContextProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#eef4ff',
+  themeToggleWrapper: {
+    position: 'absolute',
+    right: 16,
+    bottom: 90,
+    zIndex: 10,
   },
-  header: {
-    backgroundColor: '#1d4ed8',
-    paddingTop: 54,
-    paddingBottom: 22,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#1d4ed8',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  emoji: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  headerText: {
-    flex: 1,
-  },
-  titulo: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  subtitulo: {
-    fontSize: 15,
-    color: '#dbeafe',
-    fontWeight: '600',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fbff',
+  themeToggle: {
+    borderRadius: 999,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#dfeafc',
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 11,
-    borderRadius: 14,
-    backgroundColor: '#eaf1ff',
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  tabAtiva: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#bfdbfe',
-  },
-  tabNovo: {
-    backgroundColor: '#dff9eb',
-    borderColor: '#bbf7d0',
-  },
-  tabTexto: {
-    fontSize: 14,
+  themeToggleText: {
     fontWeight: '700',
-    color: '#475569',
-  },
-  tabTextoAtivo: {
-    color: '#1d4ed8',
   },
 });

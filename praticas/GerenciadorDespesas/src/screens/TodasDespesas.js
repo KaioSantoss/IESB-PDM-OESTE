@@ -1,16 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import DespesaSaida from '../components/despesa/DespesaSaida';
-import { theme } from '../constants/theme';
+import { useThemeMode } from '../constants/theme';
 import useDebounce from '../hooks/useDebounce';
 import { useExpenses } from '../store/expenses-context';
 
 export default function TodasDespesas() {
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
+  const { currentTheme } = useThemeMode();
   const { expenses } = useExpenses();
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);

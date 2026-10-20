@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, useColorScheme, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import DespesaSaida from '../components/despesa/DespesaSaida';
-import { theme } from '../constants/theme';
+import { useThemeMode } from '../constants/theme';
 import { useExpenses } from '../store/expenses-context';
 
 export default function DespesasRecentes() {
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
+  const { currentTheme } = useThemeMode();
   const { expenses } = useExpenses();
 
   const despesasRecentes = useMemo(() => {

@@ -1,3 +1,5 @@
+import React, { createContext, useContext, useMemo } from 'react';
+
 export const theme = {
   light: {
     background: '#eef4ff',
@@ -24,3 +26,40 @@ export const theme = {
     accent: '#1d4ed8',
   },
 };
+
+export const ThemeModeContext = createContext(null);
+
+export function ThemeModeProvider({ children, themeMode, setThemeMode, systemColorScheme }) {
+  const currentTheme = useMemo(() => {
+    if (themeMode === 'dark') {
+      return theme.dark;
+    }
+
+    if (themeMode === 'light') {
+      return theme.light;
+    }
+
+    return systemColorScheme === 'dark' ? theme.dark : theme.light;
+  }, [systemColorScheme, themeMode]);
+
+  const value = useMemo(
+    () => ({
+      themeMode,
+      setThemeMode,
+      currentTheme,
+    }),
+    [currentTheme, setThemeMode, themeMode]
+  );
+
+  return <ThemeModeContext.Provider value={value}>{children}</ThemeModeContext.Provider>;
+}
+
+export function useThemeMode() {
+  const context = useContext(ThemeModeContext);
+
+  if (!context) {
+    throw new Error('useThemeMode deve ser usado dentro de ThemeModeProvider');
+  }
+
+  return context;
+}

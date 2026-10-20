@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-import { theme } from '../constants/theme';
+import { useThemeMode } from '../constants/theme';
 import { useExpenses } from '../store/expenses-context';
 
 const CATEGORIES = ['Alimentação', 'Transporte', 'Lazer', 'Contas'];
@@ -62,8 +62,7 @@ export function validate(values) {
 export default function GerenciarDespesa() {
   const navigation = useNavigation();
   const route = useRoute();
-  const colorScheme = useColorScheme();
-  const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
+  const { currentTheme } = useThemeMode();
   const { expenses, addExpense, updateExpense, deleteExpense } = useExpenses();
   const expenseId = route.params?.expenseId;
   const isEditing = Boolean(expenseId);
@@ -124,8 +123,9 @@ export default function GerenciarDespesa() {
 
   useEffect(() => {
     if (!isEditing) {
+      const initialDate = new Date();
       setForm(createEmptyForm());
-      setDateInput(formatDateForInput(new Date()));
+      setDateInput(formatDateForInput(initialDate));
       setErrors({});
       return;
     }
@@ -278,7 +278,7 @@ export default function GerenciarDespesa() {
           <Text style={[styles.label, { color: currentTheme.text }]}>Data</Text>
           {Platform.OS === 'web' ? (
             <TextInput
-              value={dateInput}
+              value={dateInput || formatDateForInput(form.date)}
               onChangeText={handleDateInputChange}
               placeholder="AAAA-MM-DD"
               placeholderTextColor={currentTheme.textSecondary}
@@ -304,8 +304,7 @@ export default function GerenciarDespesa() {
                 },
               ]}
             >
-              <Text style={[styles.dateText, { color: currentTheme.text }]}
-              >
+              <Text style={[styles.dateText, { color: currentTheme.text }]}>
                 {form.date ? form.date.toLocaleDateString('pt-BR') : 'Selecione a data'}
               </Text>
             </Pressable>
