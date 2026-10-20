@@ -1,0 +1,26 @@
+export const theme = {
+  light: {
+    background: '#eef4ff',
+    surface: '#ffffff',
+    text: '#111827',
+    textSecondary: '#64748b',
+    primary: '#2563eb',
+    border: '#dfeafc',
+    error: '#dc2626',
+    card: '#ffffff',
+    inputBackground: '#f8fafc',
+    accent: '#dbeafe',
+  },
+  dark: {
+    background: '#0f172a',
+    surface: '#111827',
+    text: '#f8fafc',
+    textSecondary: '#cbd5e1',
+    primary: '#60a5fa',
+    border: '#334155',
+    error: '#f87171',
+    card: '#1e293b',
+    inputBackground: '#0b1220',
+    accent: '#1d4ed8',
+  },
+};

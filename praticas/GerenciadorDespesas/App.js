@@ -1,166 +1,68 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useColorScheme, StyleSheet } from 'react-native';
 
-import DespesasRecentes from './components/DespesasRecentes';
-import GerenciarDespesa from './components/GerenciarDespesa';
-import TodasDespesas from './components/TodasDespesas';
+import { theme } from './src/constants/theme';
+import DespesasRecentes from './src/screens/DespesasRecentes';
+import GerenciarDespesa from './src/screens/GerenciarDespesa';
+import TodasDespesas from './src/screens/TodasDespesas';
+import { ExpensesContextProvider } from './src/store/expenses-context';
 
-const gerarId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-const criarDespesaInicial = (descricao, valor, diasAtras, categoria) => {
-  const data = new Date();
-  data.setDate(data.getDate() - diasAtras);
-
-  return {
-    id: gerarId(),
-    descricao,
-    valor,
-    data: `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`,
-    categoria,
-  };
-};
-
-const despesasIniciais = [
-  criarDespesaInicial('Mercado', 180.5, 1, 'Alimentação'),
-  criarDespesaInicial('Uber para trabalho', 42.0, 2, 'Transporte'),
-  criarDespesaInicial('Cinema', 38.9, 6, 'Lazer'),
-  criarDespesaInicial('Internet', 89.9, 9, 'Contas'),
-  criarDespesaInicial('Padaria', 25.0, 12, 'Alimentação'),
-];
-
-export default function App() {
-  const [despesas, setDespesas] = useState(despesasIniciais);
-  const [abaAtiva, setAbaAtiva] = useState('recentes');
-  const [despesaEditando, setDespesaEditando] = useState(null);
-
-  const contagemTotal = useMemo(
-    () => despesas.reduce((total, despesa) => total + despesa.valor, 0),
-    [despesas]
-  );
-
-  const salvarDespesa = payload => {
-    if (despesaEditando) {
-      setDespesas(prev =>
-        prev.map(item =>
-          item.id === despesaEditando.id ? { ...item, ...payload } : item
-        )
-      );
-    } else {
-      setDespesas(prev => [{ id: gerarId(), ...payload }, ...prev]);
-    }
-
-    setAbaAtiva('recentes');
-    setDespesaEditando(null);
-  };
-
-  const excluirDespesa = id => {
-    Alert.alert('Excluir despesa', 'Deseja realmente excluir esta despesa?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => {
-          setDespesas(prev => prev.filter(item => item.id !== id));
-          if (despesaEditando && despesaEditando.id === id) {
-            setDespesaEditando(null);
-          }
-        },
-      },
-    ]);
-  };
-
-  const abrirFormularioEdicao = despesa => {
-    setDespesaEditando(despesa);
-    setAbaAtiva('formulario');
-  };
-
-  const voltarParaListagem = () => {
-    setAbaAtiva('recentes');
-    setDespesaEditando(null);
-  };
-
-  const renderConteudo = () => {
-    if (abaAtiva === 'formulario') {
-      return (
-        <GerenciarDespesa
-          despesaEditando={despesaEditando}
-          onSalvar={salvarDespesa}
-          onCancelar={voltarParaListagem}
-        />
-      );
-    }
-
-    if (abaAtiva === 'todas') {
-      return (
-        <TodasDespesas
-          despesas={despesas}
-          onEditar={abrirFormularioEdicao}
-          onExcluir={excluirDespesa}
-        />
-      );
-    }
-
-    return (
-      <DespesasRecentes
-        despesas={despesas}
-        onEditar={abrirFormularioEdicao}
-        onExcluir={excluirDespesa}
-      />
-    );
-  };
+function HomeTabs() {
+  const colorScheme = useColorScheme();
+  const currentTheme = colorScheme === 'dark' ? theme.dark : theme.light;
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: currentTheme.surface,
+          borderTopColor: currentTheme.border,
+        },
+        tabBarActiveTintColor: currentTheme.primary,
+        tabBarInactiveTintColor: currentTheme.textSecondary,
+      }}
+    >
+      <Tab.Screen
+        name="DespesasRecentes"
+        component={DespesasRecentes}
+        options={{ title: 'Recentes' }}
+      />
+      <Tab.Screen
+        name="TodasDespesas"
+        component={TodasDespesas}
+        options={{ title: 'Todas' }}
+      />
+    </Tab.Navigator>
+  );
+}
 
-      <View style={styles.header}>
-        <Text style={styles.emoji}>💸</Text>
-        <View style={styles.headerText}>
-          <Text style={styles.titulo}>Minhas Despesas</Text>
-          <Text style={styles.subtitulo}>
-            Total geral: {contagemTotal.toLocaleString('pt-BR', {
-              style: 'currency',
-              currency: 'BRL',
-            })}
-          </Text>
-        </View>
-      </View>
+export default function App() {
+  const colorScheme = useColorScheme();
 
-      <View style={styles.tabsContainer}>
-        <Pressable
-          onPress={() => setAbaAtiva('recentes')}
-          style={[styles.tab, abaAtiva === 'recentes' && styles.tabAtiva]}
-        >
-          <Text style={[styles.tabTexto, abaAtiva === 'recentes' && styles.tabTextoAtivo]}>
-            Recentes
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setAbaAtiva('todas')}
-          style={[styles.tab, abaAtiva === 'todas' && styles.tabAtiva]}
-        >
-          <Text style={[styles.tabTexto, abaAtiva === 'todas' && styles.tabTextoAtivo]}>
-            Todas
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => {
-            setDespesaEditando(null);
-            setAbaAtiva('formulario');
-          }}
-          style={[styles.tab, abaAtiva === 'formulario' && styles.tabAtiva, styles.tabNovo]}
-        >
-          <Text style={[styles.tabTexto, abaAtiva === 'formulario' && styles.tabTextoAtivo]}>
-            + Novo
-          </Text>
-        </Pressable>
-      </View>
-
-      {renderConteudo()}
-    </View>
+  return (
+    <ExpensesContextProvider>
+      <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="HomeTabs"
+            component={HomeTabs}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="GerenciarDespesa"
+            component={GerenciarDespesa}
+            options={{ title: 'Nova despesa' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ExpensesContextProvider>
   );
 }
 
